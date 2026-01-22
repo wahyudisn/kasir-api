@@ -27,8 +27,8 @@ var produk = []Produk{
 }
 var categories = []Category{
 	{ID: 1, Name: "Makanan", Description: "Berisi makanan ringan maupun berat"},
-	{ID: 2, Nama: "Minuman", Description: "Berisi daftar minuman"},
-	{ID: 3, Nama: "Bumbu Dapur", Description: "Berisi daftar bumbu dan pelengkap makanan"},
+	{ID: 2, Name: "Minuman", Description: "Berisi daftar minuman"},
+	{ID: 3, Name: "Bumbu Dapur", Description: "Berisi daftar bumbu dan pelengkap makanan"},
 }
 
 func getProdukByID(w http.ResponseWriter, r *http.Request) {
