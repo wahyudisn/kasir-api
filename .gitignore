@@ -3,3 +3,4 @@ kasir-api.exe
 kasir-api2
 kasir-api2.exe
 *.log
+.env

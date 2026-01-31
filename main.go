@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+type Config struct {
+	Port string `mapstructure:"PORT"`
+}
+
 type Produk struct {
 	ID    int    `json:"id"`
 	Nama  string `json:"nama"`
