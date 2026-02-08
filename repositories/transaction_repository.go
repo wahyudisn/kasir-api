@@ -80,3 +80,65 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 		Details:     details,
 	}, nil
 }
+
+func (repo *TransactionRepository) LaporanHariIni() (*models.RevenueSummary, error) {
+	// 1) Total revenue & total transaksi hari ini
+	var totalRevenue sql.NullInt64
+	var totalTransaksi sql.NullInt64
+
+	err := repo.db.QueryRow(`
+		SELECT
+			COALESCE(SUM(total_amount), 0) AS total_revenue,
+			COALESCE(COUNT(*), 0)          AS total_transaksi
+		FROM transactions
+		WHERE created_at >= CURRENT_DATE
+		  AND created_at <  CURRENT_DATE + INTERVAL '1 day'
+	`).Scan(&totalRevenue, &totalTransaksi)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2) Produk terlaris hari ini (berdasarkan total qty terjual)
+	// Jika belum ada transaksi hari ini, query ini bisa "no rows" -> handle jadi default.
+	var nama sql.NullString
+	var qty sql.NullInt64
+
+	err = repo.db.QueryRow(`
+		SELECT
+			p.name AS nama,
+			COALESCE(SUM(td.quantity), 0) AS qty_terjual
+		FROM transaction_details td
+		JOIN transactions t ON t.id = td.transaction_id
+		JOIN products p     ON p.id = td.product_id
+		WHERE t.created_at >= CURRENT_DATE
+		  AND t.created_at <  CURRENT_DATE + INTERVAL '1 day'
+		GROUP BY p.id, p.name
+		ORDER BY qty_terjual DESC, p.name ASC
+		LIMIT 1
+	`).Scan(&nama, &qty)
+
+	produkTerlaris := models.ProdukTerlaris{
+		Nama:       "",
+		QtyTerjual: 0,
+	}
+
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, err
+		}
+		// no rows -> biarkan default kosong
+	} else {
+		if nama.Valid {
+			produkTerlaris.Nama = nama.String
+		}
+		if qty.Valid {
+			produkTerlaris.QtyTerjual = int(qty.Int64)
+		}
+	}
+
+	return &models.RevenueSummary{
+		TotalRevenue:   int(totalRevenue.Int64),
+		TotalTransaksi: int(totalTransaksi.Int64),
+		ProdukTerlaris: produkTerlaris,
+	}, nil
+}
