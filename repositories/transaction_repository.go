@@ -61,7 +61,7 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 	var transactionDetailsID int
 	for i := range details {
 
-		_, err = tx.QueryRow("INSERT INTO transaction_details (transaction_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4) RETURNING id",
+		err = tx.QueryRow("INSERT INTO transaction_details (transaction_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4) RETURNING id",
 			transactionID, details[i].ProductID, details[i].Quantity, details[i].Subtotal).Scan(&transactionDetailsID)
 		if err != nil {
 			return nil, err
